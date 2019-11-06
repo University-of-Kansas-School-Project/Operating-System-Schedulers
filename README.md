@@ -2,8 +2,10 @@
 Implementation of various Operating System Schedulers for EECS678 at the University of Kansas
 
 ## Team Members
+```
 Saharsh Gupta : 2826224
 Blake Rieschick : 2829512
+```
 
 ## Introduction
 One piece of software that every modern operating system must contain in a scheduler: without one, only one task could be run at a time. In this MP, you will be writing a library to perform basic scheduling of tasks. Rather than interacting directly with the operating system, we have provided for you a discrete event simulator: we will simulate time, jobs arriving, and jobs running. Your library will inform the scheduler which job should run next.
