@@ -7,9 +7,20 @@
 /**
   Priqueue Data Structure
 */
+
+typedef struct node_t
+{
+	void * job;
+	int index;
+	struct node_t * left;
+	struct node_t * right;
+}Node;
+
 typedef struct _priqueue_t
 {
-
+  Node* root;
+  Node* tail;
+  int size;
 } priqueue_t;
 
 
