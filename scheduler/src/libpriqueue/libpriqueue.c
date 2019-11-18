@@ -37,62 +37,38 @@ void priqueue_init(priqueue_t *q, int(*comparer)(const void *, const void *))
  */
 int priqueue_offer(priqueue_t *q, void *ptr)
 {
- // Node * temp = q->root;
- if(q->root == NULL){
- 	q->root = malloc(sizeof(Node));
-	q->root->job = ptr;
-	q->root->left = NULL;
-	q->root->right = NULL;
-	q->tail = q->root;
-	q->root->index = q->size;
- }
- else{
-	q->size += 1;
+ Node * temp = q->root;
+ Node * newNode = malloc(sizeof(Node));
 
- // for(int i = 0; i<=q->size; i++){
-		//At end, insert into last spot
-		// if(temp == q->tail) {
-			q->tail->right = malloc(sizeof(Node));
-			q->tail = q->tail->right;
-			q->tail->job = ptr;
-			q->tail->index = q->size;
-      // sort(q->root);
-		// }
+ newNode->job = ptr;
+ q->size ++;
+
+ for(int i = 0; i<=q->size; i++){
+    //Empty List
+    if(temp = NULL){
+      newNode->left = NULL;
+      newNode->right = NULL;
+      q->root = newNode;
+    }
 		//Greater Priorty, Move Right
-	// 	if (q->comp(temp->job, ptr) >= 0){
-	// 		temp = temp->right;
-	// 	}
-	// 	//Less Priorty, Insert in between
-	// 	else {
-  //     Node * tr = temp->right;
-	// 		temp->left = temp->right;
-	// 		temp->right = ptr;
-	// 		temp->right->index = q->size;
-	// 		temp->right->right = tr;
-  //     //sort(q->root);
-	// 	}
-  // }
+		if (q->comp(temp->job, ptr) >= 0){
+			temp = temp->right;
+		}
+		//Less Priorty, Insert in between
+		else {
+      newNode->left = temp->left;
+      newNode->right = temp;
 
-		/*printf("In If\n");
-		printf("%d\n",q->comp(ptr,temp->job));
-		temp->right = malloc(sizeof(Node));
-		if(temp->right != NULL){
-			Node * tr = temp->right;
-			temp->left = temp->right;
-			temp->right = ptr;
-			temp->right->index = q->size;
-			temp->right->right = tr;
-		}*/
-		//q->tail->index = q->size;
+      newNode->left->right = newNode;
+      temp->left = newNode;
+		}
+  }
+  //List Traversed Insert at the End
+  newNode->left = temp;
+  newNode->right = NULL;
 
-	//else{
-
-	//}
-	/*q->tail->right = malloc(sizeof(Node));
-	q->tail = q->tail->right;
-	q->tail->job = ptr;
-	q->tail->index = q->size;*/
- }
+  temp->right = newNode;
+   
 	return q->size;
 }
 
