@@ -21,6 +21,7 @@ void priqueue_init(priqueue_t *q, int(*comparer)(const void *, const void *))
   q->root = NULL;
   q->tail = NULL;
   q->size = 0;
+  q->comp = comparer;
 	//q = malloc(sizeof(priqueue_t));
   //q->rootPtr = nullptr;
   // comparer(q->rootPtr->aTime, q->rootPtr->next->aTime);
@@ -36,8 +37,9 @@ void priqueue_init(priqueue_t *q, int(*comparer)(const void *, const void *))
  */
 int priqueue_offer(priqueue_t *q, void *ptr)
 {
+ // Node * temp = q->root;
  if(q->root == NULL){
- 	q->root = malloc(sizeof(Node)); 
+ 	q->root = malloc(sizeof(Node));
 	q->root->job = ptr;
 	q->root->left = NULL;
 	q->root->right = NULL;
@@ -46,14 +48,87 @@ int priqueue_offer(priqueue_t *q, void *ptr)
  }
  else{
 	q->size += 1;
-	q->tail->right = malloc(sizeof(Node));
+
+ // for(int i = 0; i<=q->size; i++){
+		//At end, insert into last spot
+		// if(temp == q->tail) {
+			q->tail->right = malloc(sizeof(Node));
+			q->tail = q->tail->right;
+			q->tail->job = ptr;
+			q->tail->index = q->size;
+      // sort(q->root);
+		// }
+		//Greater Priorty, Move Right
+	// 	if (q->comp(temp->job, ptr) >= 0){
+	// 		temp = temp->right;
+	// 	}
+	// 	//Less Priorty, Insert in between
+	// 	else {
+  //     Node * tr = temp->right;
+	// 		temp->left = temp->right;
+	// 		temp->right = ptr;
+	// 		temp->right->index = q->size;
+	// 		temp->right->right = tr;
+  //     //sort(q->root);
+	// 	}
+  // }
+
+		/*printf("In If\n");
+		printf("%d\n",q->comp(ptr,temp->job));
+		temp->right = malloc(sizeof(Node));
+		if(temp->right != NULL){
+			Node * tr = temp->right;
+			temp->left = temp->right;
+			temp->right = ptr;
+			temp->right->index = q->size;
+			temp->right->right = tr;
+		}*/
+		//q->tail->index = q->size;
+
+	//else{
+
+	//}
+	/*q->tail->right = malloc(sizeof(Node));
 	q->tail = q->tail->right;
 	q->tail->job = ptr;
-	q->tail->index = q->size;
+	q->tail->index = q->size;*/
  }
 	return q->size;
 }
 
+void sort(Node * r){
+  int swapped;
+  Node *ptr1;
+  Node *lptr = NULL;
+
+  /* Checking for empty list */
+  if (r == NULL)
+      return;
+
+  do
+  {
+      swapped = 0;
+      ptr1 = r;
+
+      while (ptr1->right != lptr)
+      {
+          if (ptr1->job > ptr1->right->job)
+          {
+              swap(ptr1, ptr1->right);
+              swapped = 1;
+          }
+          ptr1 = ptr1->right;
+      }
+      lptr = ptr1;
+  }
+  while (swapped);
+}
+
+void swap(Node* a, Node* b){
+   void * temp = a->job;
+   a->job = b->job;
+   b->job = temp;
+}
 
 /**
   Retrieves, but does not remove, the head of this queue, returning NULL if
@@ -113,7 +188,7 @@ void *priqueue_at(priqueue_t *q, int index)
 		}
 	}*/
 	for(int lcv = 0; lcv < index; lcv++) {
-		temp = temp->right;	
+		temp = temp->right;
 	}
 	//temp = temp + (index)*sizeof(Node);
 	return temp->job;
@@ -131,7 +206,18 @@ void *priqueue_at(priqueue_t *q, int index)
  */
 int priqueue_remove(priqueue_t *q, void *ptr)
 {
-	return 0;
+	int c = 0;
+	Node * temp = q->root;
+	for(int i = 0; i <= q->size; i++){
+		if(temp->job == ptr){
+			c++;
+			temp->left = temp->right;
+			free(temp);
+		}
+		temp = temp->right;
+	}
+	q->size -= c;
+	return c;
 }
 
 
@@ -146,7 +232,27 @@ int priqueue_remove(priqueue_t *q, void *ptr)
  */
 void *priqueue_remove_at(priqueue_t *q, int index)
 {
-	return 0;
+	Node * temp = q->root;
+	if(index > q->size){
+		return NULL;
+	}
+	/*for(int lcv = 0; lcv < index; lcv++) {
+		if(temp->index == index){
+			temp = q->root->job;
+			break;
+		}
+		else{
+			temp = temp->right;
+		}
+	}*/
+	for(int lcv = 0; lcv < index; lcv++) {
+		temp = temp->right;
+	}
+	//temp = temp + (index)*sizeof(Node);
+	void * j = temp->job;
+	free(temp);
+	q->size--;
+	return j;
 }
 
 
@@ -169,5 +275,6 @@ int priqueue_size(priqueue_t *q)
  */
 void priqueue_destroy(priqueue_t *q)
 {
-
+	for(int i = 0; i<= q->size; i++)
+		priqueue_remove_at(q, i);
 }

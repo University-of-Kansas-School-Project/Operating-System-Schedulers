@@ -20,12 +20,15 @@ typedef struct _priqueue_t
 {
   Node* root;
   Node* tail;
+  int(*comp)(const void *, const void *);
   int size;
 } priqueue_t;
 
 
 void   priqueue_init     (priqueue_t *q, int(*comparer)(const void *, const void *));
 
+void swap(Node * a, Node* b);
+void sort(Node * r);
 int    priqueue_offer    (priqueue_t *q, void *ptr);
 void * priqueue_peek     (priqueue_t *q);
 void * priqueue_poll     (priqueue_t *q);
