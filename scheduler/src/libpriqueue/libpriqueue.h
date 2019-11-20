@@ -28,7 +28,8 @@ typedef struct _priqueue_t
 void   priqueue_init     (priqueue_t *q, int(*comparer)(const void *, const void *));
 
 void swap(Node * a, Node* b);
-void sort(Node * r);
+void sort(priqueue_t *q);
+void listSort(priqueue_t *q);
 int    priqueue_offer    (priqueue_t *q, void *ptr);
 void * priqueue_peek     (priqueue_t *q);
 void * priqueue_poll     (priqueue_t *q);

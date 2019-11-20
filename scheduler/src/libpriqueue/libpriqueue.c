@@ -37,27 +37,113 @@ void priqueue_init(priqueue_t *q, int(*comparer)(const void *, const void *))
  */
 int priqueue_offer(priqueue_t *q, void *ptr)
 {
- // Node * temp = q->root;
- if(q->root == NULL){
- 	q->root = malloc(sizeof(Node));
-	q->root->job = ptr;
-	q->root->left = NULL;
-	q->root->right = NULL;
-	q->tail = q->root;
-	q->root->index = q->size;
- }
- else{
-	q->size += 1;
+  Node * temp = q->root;
+  Node * newNode = malloc(sizeof(Node));
+  q->size += 1;
+  newNode->job = ptr;
+  if(temp == NULL){
+    q->root = newNode;
+    q->tail = newNode;
+    newNode->right = NULL;
+    newNode->left = NULL;
+  }
+  else{
+    // if(q->comp(newNode->job, q->tail->job) >= 0){
+    //   //newNode is large, add at the end
+    //   q->tail->right = newNode;
+    //   newNode->left = q->tail;
+    //   q->tail = newNode;
+    // }
+    // else{
+    //   //newNode is small, swap
+    //   while(temp != NULL){
+    //     if(q->comp(newNode->job, temp->job) >= 0){
+    //       //location found insert
+    //       if(temp->left == NULL){
+    //         q->root = newNode;
+    //         newNode->right = temp;
+    //         break;
+    //       }
+    //     else{
+    //       Node * mid = temp->left;
+    //       temp->left = newNode;
+    //       newNode->right = temp;
+    //       newNode->left = mid;
+    //       mid->right = newNode;
+    //       break;
+    //     }
+    //     }
+    //     else{
+    //       //traverse
+    //       temp = temp->right;
+    //     }
+    //   }
+    // }
 
- // for(int i = 0; i<=q->size; i++){
-		//At end, insert into last spot
-		// if(temp == q->tail) {
-			q->tail->right = malloc(sizeof(Node));
-			q->tail = q->tail->right;
-			q->tail->job = ptr;
-			q->tail->index = q->size;
-      // sort(q->root);
-		// }
+      q->tail->right = newNode;
+      q->tail = newNode;
+      listSort(q);
+  }
+
+
+  // Node* current = q->root;
+  // Node * newNode = malloc(sizeof(Node));
+  // newNode->job = ptr;
+  // q->size +=1;
+  //
+  // // Case 1 of the above algo
+  // if (current == NULL)
+  // {
+  //     newNode->right = newNode;
+  //     q->root = newNode;
+  // }
+  //
+  // // Case 2 of the above algo
+  // else if (q->comp(current->job, newNode->job) > 0)
+  // {
+  //     /* If value is smaller than head's value then
+  //     we need to change next of last node */
+  //     swap(current->job, newNode->job);
+  //
+  //     newNode->right = q->root;
+  //     q->root->right = newNode;
+  // }
+  //
+  // // Case 3 of the above algo
+  // else
+  // {
+  //     /* Locate the node before the point of insertion */
+  //     while (current->right!= q->root &&
+  //         q->comp(current->right->job, newNode->job) < 0)
+  //     current = current->right;
+  //
+  //     newNode->right = current->right;
+  //     current->right = newNode;
+  // }
+  // return q->size;
+ // Node * temp = q->root;
+ // if(q->root == NULL){
+ // 	q->root = malloc(sizeof(Node));
+	// q->root->job = ptr;
+	// q->root->left = NULL;
+	// q->root->right = NULL;
+	// q->tail = q->root;
+	// q->root->index = q->size;
+ // }
+ // else{
+	// q->size += 1;
+ //
+ // // for(int i = 0; i<=q->size; i++){
+	// 	//At end, insert into last spot
+	// 	// if(temp == q->tail) {
+	// 		q->tail->right = malloc(sizeof(Node));
+ //      q->tail->right->left = q->tail;
+	// 		q->tail = q->tail->right;
+	// 		q->tail->job = ptr;
+	// 		q->tail->index = q->size;
+ //      //if(q->comp(q->tail->left->job, q->tail->job) > 0)
+ //        sort(q);
+	// 	}
 		//Greater Priorty, Move Right
 	// 	if (q->comp(temp->job, ptr) >= 0){
 	// 		temp = temp->right;
@@ -71,7 +157,37 @@ int priqueue_offer(priqueue_t *q, void *ptr)
 	// 		temp->right->right = tr;
   //     //sort(q->root);
 	// 	}
-  // }
+  // }// if(q->comp(newNode->job, q->tail->job) >= 0){
+    //   //newNode is large, add at the end
+    //   q->tail->right = newNode;
+    //   newNode->left = q->tail;
+    //   q->tail = newNode;
+    // }
+    // else{
+    //   //newNode is small, swap
+    //   while(temp != NULL){
+    //     if(q->comp(newNode->job, temp->job) >= 0){
+    //       //location found insert
+    //       if(temp->left == NULL){
+    //         q->root = newNode;
+    //         newNode->right = temp;
+    //         break;
+    //       }
+    //     else{
+    //       Node * mid = temp->left;
+    //       temp->left = newNode;
+    //       newNode->right = temp;
+    //       newNode->left = mid;
+    //       mid->right = newNode;
+    //       break;
+    //     }
+    //     }
+    //     else{
+    //       //traverse
+    //       temp = temp->right;
+    //     }
+    //   }
+    // }
 
 		/*printf("In If\n");
 		printf("%d\n",q->comp(ptr,temp->job));
@@ -92,30 +208,58 @@ int priqueue_offer(priqueue_t *q, void *ptr)
 	q->tail = q->tail->right;
 	q->tail->job = ptr;
 	q->tail->index = q->size;*/
- }
+ // }
 	return q->size;
 }
 
-void sort(Node * r){
+void listSort(priqueue_t *q){
+  Node* curr;// = m_front;
+	Node* temp = NULL;
+	Node* lptr = NULL;
+	int swapped = 0;
+	if(q->root == NULL)
+		return;
+	do{
+		swapped = 0;
+		curr = q->root;
+		while(curr->right != lptr){
+			temp = curr;
+			curr = curr->right;
+			if(curr != NULL && q->comp(temp->job, curr->job) > 0){
+				void * t = temp->job;
+				void * c = curr->job;
+				temp->job = c;
+				curr->job = t;
+				swapped = 1;
+        break;
+				//std::cout<<t;
+			}
+		}
+		lptr = curr;
+	}while(swapped);
+}
+
+void sort(priqueue_t *q){
   int swapped;
   Node *ptr1;
   Node *lptr = NULL;
 
   /* Checking for empty list */
-  if (r == NULL)
+  if (q->root == NULL)
       return;
 
   do
   {
       swapped = 0;
-      ptr1 = r;
+      ptr1 = q->root;
 
       while (ptr1->right != lptr)
       {
-          if (ptr1->job > ptr1->right->job)
+          if (q->comp(ptr1->job, ptr1->right->job) > 0)
           {
               swap(ptr1, ptr1->right);
               swapped = 1;
+              // return;
           }
           ptr1 = ptr1->right;
       }
@@ -155,9 +299,9 @@ void *priqueue_peek(priqueue_t *q)
 void *priqueue_poll(priqueue_t *q)
 {
 	void * temp = q->root->job;
-	Node * td = q->root;
+	// Node * td = q->root;
 	q->root = q->root->right;
-	free(td);
+	// free(td);
 	q->size --;
 	return temp;
 }
@@ -208,12 +352,21 @@ int priqueue_remove(priqueue_t *q, void *ptr)
 {
 	int c = 0;
 	Node * temp = q->root;
-	for(int i = 0; i <= q->size; i++){
+  Node * pTemp = q->root;
+	for(int i = 0; i < q->size; i++){
 		if(temp->job == ptr){
 			c++;
-			temp->left = temp->right;
-			free(temp);
+      // Node * t = temp;
+
+      // printf(" removing%d \n", *(int *)temp->job);
+      if(temp->right != NULL)
+			   pTemp->right = temp->right;
+      else
+        pTemp->right = NULL;
+      // printf("linking %d with %d\n", *(int *)pTemp->job, *(int *)temp->right->job);
+			// free(temp);
 		}
+    pTemp = temp;
 		temp = temp->right;
 	}
 	q->size -= c;
@@ -264,7 +417,7 @@ void *priqueue_remove_at(priqueue_t *q, int index)
  */
 int priqueue_size(priqueue_t *q)
 {
-	return q->size+1;
+	return q->size;
 }
 
 
