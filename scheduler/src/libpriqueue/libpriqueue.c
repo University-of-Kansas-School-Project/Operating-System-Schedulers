@@ -226,7 +226,7 @@ void listSort(priqueue_t *q){
 		while(curr->right != lptr){
 			temp = curr;
 			curr = curr->right;
-			if(curr != NULL && q->comp(temp->job, curr->job) > 0){
+			if(curr != NULL && q->comp(temp->job, curr->job) >= 0){
 				void * t = temp->job;
 				void * c = curr->job;
 				temp->job = c;

@@ -16,24 +16,27 @@
 */
 typedef struct _job_t
 {
-  // _job_t * next;
   int aTime;
   int rTime;
   int pri;
   int remTime;
   int jobNum;
   int cN;
+  int sTime;
+  int cTime;
 
 } job_t;
 
 typedef struct _scheduler_t
 {
-  // pthread_t * t;
-  priqueue_t q;
+  priqueue_t * q;
   int (*comp)(const void *, const void *);
-  int * c;
+  job_t ** c;
   int nCores;
   scheme_t s;
+  int wTime;
+  int tTime;
+  int rTime;
 }s_t;
 
 s_t sc;
@@ -72,11 +75,15 @@ int comparePSJF(const void * a, const void * b)
 */
 void scheduler_start_up(int cores, scheme_t scheme)
 {
-  sc.c = malloc(cores*sizeof(int));
+  sc.c = malloc(cores*sizeof(job_t));
   sc.nCores = cores;
   sc.s = scheme;
+  sc.rTime = 0;
+  sc.wTime = 0;
+  sc.tTime = 0;
   for(int i =0; i<cores; i++){
-    sc.c[i] = -1;
+    sc.c[i] = malloc(sizeof(job_t));
+    sc.c[i] = NULL;
   }
   switch (scheme){
     case FCFS:
@@ -91,15 +98,15 @@ void scheduler_start_up(int cores, scheme_t scheme)
     case PSJF:
             sc.comp = &comparePSJF;
             break;
+    case PPRI:
+            sc.comp = &comparePRI;
+            break;
     default:
           printf("default\n");
           break;
   }
- // sc.t = malloc(cores * sizeof(pthread_t));
- // for(int i =0; i<cores; i++){
- //   sc.t[i] = '\0';
- // }
- priqueue_init(&sc.q, sc.comp);
+ sc.q = malloc(sizeof(priqueue_t));
+ priqueue_init(sc.q, sc.comp);
 }
 
 
@@ -125,25 +132,72 @@ void scheduler_start_up(int cores, scheme_t scheme)
  */
 int scheduler_new_job(int job_number, int time, int running_time, int priority)
 {
+  int hp = -1;
+  int hpi = -1;
   job_t * j = malloc(sizeof(job_t));
   j->aTime = time;
   j->jobNum = job_number;
   j->rTime = j->remTime = running_time;
   j->pri = priority;
-  priqueue_offer(&sc.q, (void *)j);
+  priqueue_offer(sc.q, (void *)j);
+  listSort(sc.q);
   for(int i = 0; i<sc.nCores; i++){
-    if(sc.c[i] == -1){
-      sc.c[i] = ((job_t *)priqueue_poll(&sc.q))->jobNum;
+    if(sc.c[i] == NULL){
+      sc.c[i] = ((job_t *)priqueue_poll(sc.q));
+      // if(sc.s != PPRI || sc.s != PSJF)
+        sc.c[i]->sTime = time;
       j->cN = i;
       return i;
     }
   }
-  if((job_t *)priqueue_peek(&sc.q) == j && sc.s == PSJF){
-    // int tJ = (job_t *)priqueue_peek(&sc.q)->jobNum;
+  // if(sc.c[0]!= NULL){
+  //   if(sc.s == PPRI)
+  //     hp = sc.c[0]->pri;
+  //   if(sc.s == PSJF)
+  //     hp = sc.c[0]->remTime;
+  // }
 
-    // priqueue_at(&sc.q,1)
+  for(int i = 0; i<sc.nCores; i++){
+    if(sc.c[i] != NULL){
+      if(sc.c[i]->pri > hp && sc.s == PPRI){
+          hp = sc.c[i]->pri;
+          hpi = i;
+      }
+      if(sc.c[i]->remTime > hp && sc.s == PSJF){
+          hp = sc.c[i]->remTime;
+          hpi = i;
+      }
+    }
   }
 
+  if(hpi != -1){
+    sc.c[hpi]->remTime -= (time - sc.c[hpi]->sTime);
+    // printf("Updated rem time: %d\n",sc.c[hpi]->remTime );
+    if(((job_t *)priqueue_peek(sc.q))->remTime < sc.c[hpi]->remTime && sc.s == PSJF){
+          printf("Preempting\n");
+          printf("%d\n",sc.c[hpi]->jobNum );
+          printf("%d\n",sc.c[hpi]->remTime );
+          // sc.wTime -= time;
+          // sc.rTime -= time;
+          // sc.c[hpi]->sTime = -1;
+          priqueue_offer(sc.q, (void *)sc.c[hpi]);
+          sc.c[hpi] = ((job_t *)priqueue_poll(sc.q));
+          sc.c[hpi]->sTime = time;
+          return hpi;
+    }
+    if(((job_t *)priqueue_peek(sc.q))->pri < sc.c[hpi]->pri && sc.s == PPRI){
+          printf("Preempting\n");
+          printf("%d\n",sc.c[hpi]->jobNum );
+          // sc.wTime -= time;
+          // sc.rTime -= time;
+          // sc.c[hpi]->sTime = -1;
+          priqueue_offer(sc.q, (void *)sc.c[hpi]);
+          sc.c[hpi] = ((job_t *)priqueue_poll(sc.q));
+          sc.c[hpi]->sTime = time;
+          return hpi;
+    }
+
+  }
 	return -1;
 }
 
@@ -164,17 +218,22 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
  */
 int scheduler_job_finished(int core_id, int job_number, int time)
 {
-  if(priqueue_size(&sc.q) == 0){
-    sc.c[core_id] = -1;
+  job_t * j = malloc(sizeof(job_t));
+  j = sc.c[core_id];
+  j->cTime = time;
+    printf("Job Num: %d sTime: %d cTime: %d\n", j->jobNum, j->sTime, j->cTime);
+  sc.rTime += (j->sTime - j->aTime);
+  sc.tTime += (j->cTime - j->aTime);
+  sc.wTime += (j->cTime - j->rTime - j->aTime);
+  if(priqueue_size(sc.q) == 0){
+    sc.c[core_id] = NULL;
     return -1;
   }
   else{
-    // sc.c[core_id] = -1;
-    // priqueue_remove_at(&sc.q,0);
-    // if(priqueue_size(&sc.q) == 1)
-      // return -1;
-    // else
-      return ((job_t *)priqueue_poll(&sc.q))->jobNum;
+      sc.c[core_id] = ((job_t *)priqueue_poll(sc.q));
+      if(sc.c[core_id]->sTime == 0)
+        sc.c[core_id]->sTime = time;
+      return sc.c[core_id]->jobNum;
   }
 }
 
@@ -207,7 +266,7 @@ int scheduler_quantum_expired(int core_id, int time)
  */
 float scheduler_average_waiting_time()
 {
-	return 0.0;
+	return ((float)sc.wTime)/5;
 }
 
 
@@ -220,7 +279,7 @@ float scheduler_average_waiting_time()
  */
 float scheduler_average_turnaround_time()
 {
-	return 0.0;
+	return ((float)sc.tTime)/5;
 }
 
 
@@ -233,7 +292,7 @@ float scheduler_average_turnaround_time()
  */
 float scheduler_average_response_time()
 {
-	return 0.0;
+	return ((float)sc.rTime)/5;
 }
 
 
@@ -245,7 +304,8 @@ float scheduler_average_response_time()
 */
 void scheduler_clean_up()
 {
-
+  free(sc.q);
+  // free(sc.tq2);
 }
 
 
@@ -262,7 +322,7 @@ void scheduler_clean_up()
  */
 void scheduler_show_queue()
 {
-  for (int i = 0; i < priqueue_size(&sc.q); i++)
-		printf("val: %d ", ((job_t *)priqueue_at(&sc.q, i))->jobNum );
+  for (int i = 0; i < priqueue_size(sc.q); i++)
+		printf("val: %d(%d) ", ((job_t *)priqueue_at(sc.q, i))->jobNum,  ((job_t *)priqueue_at(sc.q, i))->remTime);
 	printf("\n");
 }
