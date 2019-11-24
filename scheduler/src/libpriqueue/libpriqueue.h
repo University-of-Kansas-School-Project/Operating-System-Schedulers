@@ -12,7 +12,6 @@ typedef struct node_t
 {
 	void * job;
 	int index;
-	struct node_t * left;
 	struct node_t * right;
 }Node;
 

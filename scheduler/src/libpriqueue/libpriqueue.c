@@ -45,7 +45,7 @@ int priqueue_offer(priqueue_t *q, void *ptr)
     q->root = newNode;
     q->tail = newNode;
     newNode->right = NULL;
-    newNode->left = NULL;
+    // newNode->left = NULL;
   }
   else{
     // if(q->comp(newNode->job, q->tail->job) >= 0){
@@ -209,6 +209,7 @@ int priqueue_offer(priqueue_t *q, void *ptr)
 	q->tail->job = ptr;
 	q->tail->index = q->size;*/
  // }
+ listSort(q);
 	return q->size;
 }
 
@@ -298,12 +299,13 @@ void *priqueue_peek(priqueue_t *q)
  */
 void *priqueue_poll(priqueue_t *q)
 {
-	void * temp = q->root->job;
+	// void * temp = q->root->job;
 	// Node * td = q->root;
-	q->root = q->root->right;
+	// q->root = q->root->right;
+
 	// free(td);
-	q->size --;
-	return temp;
+	// q->size --;
+	return priqueue_remove_at(q,0);
 }
 
 
@@ -352,24 +354,30 @@ int priqueue_remove(priqueue_t *q, void *ptr)
 {
 	int c = 0;
 	Node * temp = q->root;
-  Node * pTemp = q->root;
-	for(int i = 0; i < q->size; i++){
+  int s = q->size;
+  // Node * pTemp = q->root;
+	for(int i = 0; i < s; i++){
 		if(temp->job == ptr){
 			c++;
-      // Node * t = temp;
-
+      priqueue_remove_at(q,i);
+      return priqueue_remove(q,ptr) + 1;
+      // break;
+      // // Node * t = temp;
+      //
       // printf(" removing%d \n", *(int *)temp->job);
-      if(temp->right != NULL)
-			   pTemp->right = temp->right;
-      else
-        pTemp->right = NULL;
+      // if(temp->right != NULL)
+			//    pTemp->right = temp->right;
+      // else
+      //   pTemp->right = NULL;
       // printf("linking %d with %d\n", *(int *)pTemp->job, *(int *)temp->right->job);
 			// free(temp);
 		}
-    pTemp = temp;
-		temp = temp->right;
+    else
+      temp = temp->right;
+    // pTemp = temp;
+		// temp = temp->right;
 	}
-	q->size -= c;
+	// q->size -= c;
 	return c;
 }
 
@@ -386,6 +394,7 @@ int priqueue_remove(priqueue_t *q, void *ptr)
 void *priqueue_remove_at(priqueue_t *q, int index)
 {
 	Node * temp = q->root;
+  Node * pTemp = q->root;
 	if(index > q->size){
 		return NULL;
 	}
@@ -399,11 +408,31 @@ void *priqueue_remove_at(priqueue_t *q, int index)
 		}
 	}*/
 	for(int lcv = 0; lcv < index; lcv++) {
+    pTemp = temp;
 		temp = temp->right;
 	}
 	//temp = temp + (index)*sizeof(Node);
 	void * j = temp->job;
-	free(temp);
+  if(temp == q->root && temp->right != NULL){
+    // printf("removing head case1\n");
+    q->root = temp->right;
+  }
+  else if (temp == q->root && temp->right == NULL){
+    // printf("case4\n");
+    q->root = NULL;
+    q->tail = NULL;
+  }
+  else if(temp == q->tail){
+    // printf("case3\n");
+    pTemp->right = NULL;
+    q->tail = pTemp;
+  }
+  else{
+    // printf("case2\n");
+    pTemp->right = temp->right;
+  }
+
+  free(temp);
 	q->size--;
 	return j;
 }
