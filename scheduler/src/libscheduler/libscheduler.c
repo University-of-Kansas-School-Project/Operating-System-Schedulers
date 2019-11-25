@@ -39,6 +39,7 @@ typedef struct _scheduler_t
   int tTime;
   int rTime;
   int tJobs;
+  int rJobs;
 }s_t;
 
 s_t sc;
@@ -88,6 +89,7 @@ void scheduler_start_up(int cores, scheme_t scheme)
   sc.wTime = 0;
   sc.tTime = 0;
   sc.tJobs = 0;
+  sc.rJobs = 0;
   for(int i =0; i<cores; i++){
     sc.c[i] = malloc(sizeof(job_t));
     sc.c[i] = NULL;
@@ -145,18 +147,25 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
   int hp = -1;
   int hpi = -1;
   sc.tJobs += 1;
+  sc.rJobs += 1;
   job_t * j = malloc(sizeof(job_t));
   j->aTime = time;
   j->jobNum = job_number;
   j->rTime = j->remTime = running_time;
   j->pri = priority;
-  j->rrP = sc.tJobs;
+  // j->rrP = sc.tJobs;
+  j->sTime = -1;
+  if(sc.s == RR){
+    j->rrP = time;
+  }
   priqueue_offer(sc.q, (void *)j);
-  listSort(sc.q);
+  if(sc.s != RR)
+    listSort(sc.q);
   for(int i = 0; i<sc.nCores; i++){
     if(sc.c[i] == NULL){
       sc.c[i] = ((job_t *)priqueue_poll(sc.q));
       // if(sc.s != PPRI || sc.s != PSJF)
+      // if(sc.c[i]->sTime == -1)
         sc.c[i]->sTime = time;
       j->cN = i;
       return i;
@@ -191,7 +200,8 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
           printf("%d\n",sc.c[hpi]->remTime );
           // sc.wTime -= time;
           // sc.rTime -= time;
-          // sc.c[hpi]->sTime = -1;
+          if(sc.c[hpi]->rTime == sc.c[hpi]->remTime)
+            sc.c[hpi]->sTime = -1;
           priqueue_offer(sc.q, (void *)sc.c[hpi]);
           sc.c[hpi] = ((job_t *)priqueue_poll(sc.q));
           sc.c[hpi]->sTime = time;
@@ -202,7 +212,8 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
           printf("%d\n",sc.c[hpi]->jobNum );
           // sc.wTime -= time;
           // sc.rTime -= time;
-          // sc.c[hpi]->sTime = -1;
+          if(sc.c[hpi]->rTime == sc.c[hpi]->remTime)
+            sc.c[hpi]->sTime = -1;
           priqueue_offer(sc.q, (void *)sc.c[hpi]);
           sc.c[hpi] = ((job_t *)priqueue_poll(sc.q));
           sc.c[hpi]->sTime = time;
@@ -234,16 +245,18 @@ int scheduler_job_finished(int core_id, int job_number, int time)
   j = sc.c[core_id];
   j->cTime = time;
     printf("Job Num: %d sTime: %d cTime: %d\n", j->jobNum, j->sTime, j->cTime);
-  sc.rTime += (j->sTime - j->aTime);
+  if(j->sTime != -1)
+    sc.rTime -= (j->aTime - j->sTime);
   sc.tTime += (j->cTime - j->aTime);
   sc.wTime += (j->cTime - j->rTime - j->aTime);
+  sc.rJobs -=1;
   if(priqueue_size(sc.q) == 0){
     sc.c[core_id] = NULL;
     return -1;
   }
   else{
       sc.c[core_id] = ((job_t *)priqueue_poll(sc.q));
-      if(sc.c[core_id]->sTime == 0)
+      if(sc.c[core_id]->sTime == -1)
         sc.c[core_id]->sTime = time;
       return sc.c[core_id]->jobNum;
   }
@@ -265,15 +278,39 @@ int scheduler_job_finished(int core_id, int job_number, int time)
  */
 int scheduler_quantum_expired(int core_id, int time)
 {
-  if(priqueue_size(sc.q) >= 0){
-    sc.c[core_id]->rrP += sc.c[core_id]->aTime;
-    // listSort(sc.q);
-    priqueue_offer(sc.q,(void *)(sc.c[core_id]));
-    // listSort(sc.q);
-    sc.c[core_id] = priqueue_poll(sc.q);
-  	return sc.c[core_id]->jobNum;
+  int s = 0;
+  int b = 1;
+  for(int i =0; i<sc.nCores; i++){
+    if(sc.c[i] == NULL){
+      s++;
+    }
   }
-  return -1;
+  if(s == sc.nCores){
+    b = 0;
+  }
+  if(b){
+    // sc.rJobs += 1;
+    job_t * temp;
+    temp = sc.c[core_id];
+    sc.c[core_id]->rrP = time;
+    // sc.tJobs +=1;
+    if(priqueue_size(sc.q) != 0){
+      // listSort(sc.q);
+      if(sc.c[core_id] != NULL) {
+        sc.c[core_id] = ((job_t *)priqueue_poll(sc.q));
+        priqueue_offer(sc.q,(void *)(temp));
+      }
+
+
+    }
+    // if(sc.c[core_id]->sTime == -1)
+    //   sc.c[core_id]->sTime = time;
+    return sc.c[core_id]->jobNum;
+  }
+  else{
+    sc.c[core_id] = NULL;
+    return -1;
+  }
 }
 
 
