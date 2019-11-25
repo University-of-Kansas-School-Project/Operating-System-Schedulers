@@ -24,6 +24,7 @@ typedef struct _job_t
   int cN;
   int sTime;
   int cTime;
+  int rrP;
 
 } job_t;
 
@@ -37,6 +38,7 @@ typedef struct _scheduler_t
   int wTime;
   int tTime;
   int rTime;
+  int tJobs;
 }s_t;
 
 s_t sc;
@@ -61,6 +63,10 @@ int comparePSJF(const void * a, const void * b)
   return ( (*(job_t*)a).remTime - (*(job_t*)b).remTime );
 }
 
+int compareRR(const void * a, const void * b)
+{
+  return ( (*(job_t*)a).rrP - (*(job_t*)b).rrP );
+}
 /**
   Initalizes the scheduler.
 
@@ -81,6 +87,7 @@ void scheduler_start_up(int cores, scheme_t scheme)
   sc.rTime = 0;
   sc.wTime = 0;
   sc.tTime = 0;
+  sc.tJobs = 0;
   for(int i =0; i<cores; i++){
     sc.c[i] = malloc(sizeof(job_t));
     sc.c[i] = NULL;
@@ -100,6 +107,9 @@ void scheduler_start_up(int cores, scheme_t scheme)
             break;
     case PPRI:
             sc.comp = &comparePRI;
+            break;
+    case RR:
+            sc.comp = &compareRR;
             break;
     default:
           printf("default\n");
@@ -134,11 +144,13 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
 {
   int hp = -1;
   int hpi = -1;
+  sc.tJobs += 1;
   job_t * j = malloc(sizeof(job_t));
   j->aTime = time;
   j->jobNum = job_number;
   j->rTime = j->remTime = running_time;
   j->pri = priority;
+  j->rrP = sc.tJobs;
   priqueue_offer(sc.q, (void *)j);
   listSort(sc.q);
   for(int i = 0; i<sc.nCores; i++){
@@ -253,7 +265,15 @@ int scheduler_job_finished(int core_id, int job_number, int time)
  */
 int scheduler_quantum_expired(int core_id, int time)
 {
-	return -1;
+  if(priqueue_size(sc.q) >= 0){
+    sc.c[core_id]->rrP += sc.c[core_id]->aTime;
+    // listSort(sc.q);
+    priqueue_offer(sc.q,(void *)(sc.c[core_id]));
+    // listSort(sc.q);
+    sc.c[core_id] = priqueue_poll(sc.q);
+  	return sc.c[core_id]->jobNum;
+  }
+  return -1;
 }
 
 
@@ -266,7 +286,7 @@ int scheduler_quantum_expired(int core_id, int time)
  */
 float scheduler_average_waiting_time()
 {
-	return ((float)sc.wTime)/5;
+	return ((float)sc.wTime)/sc.tJobs;
 }
 
 
@@ -279,7 +299,7 @@ float scheduler_average_waiting_time()
  */
 float scheduler_average_turnaround_time()
 {
-	return ((float)sc.tTime)/5;
+	return ((float)sc.tTime)/sc.tJobs;
 }
 
 
@@ -292,7 +312,7 @@ float scheduler_average_turnaround_time()
  */
 float scheduler_average_response_time()
 {
-	return ((float)sc.rTime)/5;
+	return ((float)sc.rTime)/sc.tJobs;
 }
 
 
