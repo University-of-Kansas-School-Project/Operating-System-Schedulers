@@ -244,10 +244,11 @@ void listSort(priqueue_t *q){
 				//std::cout<<t;
 			}
       //Case: When Priorities are the same
-      else if(curr != NULL && q->comp(temp->job, curr->job) == 0) {
+      else if(curr != NULL && q->comp2 != NULL) {
+        if( q->comp(temp->job, curr->job) == 0) {
         //Temp Arrival greater then Curr Arrival
-        printf("Comparing 2 Jobs with equal priorty -> Checking Arrival Time now\n");
-        if(q->comp2(temp->job, curr->job) >= 0) {
+        // printf("Comparing 2 Jobs with equal priorty -> Checking Arrival Time now\n");
+        if(q->comp2(temp->job, curr->job) > 0) {
           void * t = temp->job;
           void * c = curr->job;
           temp->job = c;
@@ -259,6 +260,7 @@ void listSort(priqueue_t *q){
         else {
           //Do Nothing, Keep the order
         }
+      }
       }
 		}
 		lptr = curr;

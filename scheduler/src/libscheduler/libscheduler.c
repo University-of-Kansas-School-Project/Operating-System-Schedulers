@@ -118,7 +118,7 @@ void scheduler_start_up(int cores, scheme_t scheme)
             break;
     case RR:
             sc.comp = &compareRR;
-            sc.comp2 = &compareFCFS;
+            sc.comp2 = NULL;
             break;
     default:
           printf("default\n");
@@ -293,17 +293,18 @@ int scheduler_job_finished(int core_id, int job_number, int time)
  */
 int scheduler_quantum_expired(int core_id, int time)
 {
-  int s = 0;
-  int b = 1;
-  for(int i =0; i<sc.nCores; i++){
-    if(sc.c[i] == NULL){
-      s++;
-    }
-  }
-  if(s == sc.nCores){
-    b = 0;
-  }
-  if(b || priqueue_size(sc.q) >=0){
+  // int s = 0;
+  // int b = 1;
+  // for(int i =0; i<sc.nCores; i++){
+  //   if(sc.c[i] == NULL){
+  //     s++;
+  //   }
+  // }
+  // if(s == sc.nCores){
+  //   b = 0;
+  // }
+  printf("Working on Core: %d\n", core_id);
+  if(priqueue_size(sc.q) >=0){
     // sc.rJobs += 1;
     job_t * temp;
     temp = sc.c[core_id];
@@ -311,16 +312,18 @@ int scheduler_quantum_expired(int core_id, int time)
     // sc.tJobs +=1;
     if(priqueue_size(sc.q) != 0){
       // listSort(sc.q);
-      if(sc.c[core_id] != NULL) {
+      // if(sc.c[core_id] != NULL) {
         sc.c[core_id] = ((job_t *)priqueue_poll(sc.q));
         priqueue_offer(sc.q,(void *)(temp));
         if(sc.c[core_id]->sTime == -1){
           sc.c[core_id]->sTime = time;
         }
-      }
+      // }
 
 
     }
+
+    // printf("queue size is zero, retaining job on core: %d", core_id);
     // if(sc.c[core_id]->sTime == -1)
     //   sc.c[core_id]->sTime = time;
     return sc.c[core_id]->jobNum;
