@@ -82,6 +82,7 @@ int priqueue_offer(priqueue_t *q, void *ptr)
 
       q->tail->right = newNode;
       q->tail = newNode;
+      newNode->right = NULL;
       listSort(q);
   }
 
@@ -307,7 +308,12 @@ void *priqueue_poll(priqueue_t *q)
 
 	// free(td);
 	// q->size --;
-	return priqueue_remove_at(q,0);
+  // if(priqueue_size(q) == 0)
+  //   return NULL;
+  // else
+	 return priqueue_remove_at(q,0);
+  // else
+  //   return NULL;
 }
 
 
@@ -397,6 +403,8 @@ void *priqueue_remove_at(priqueue_t *q, int index)
 {
 	Node * temp = q->root;
   Node * pTemp = q->root;
+  if(priqueue_size(q) == 0)
+    return NULL;
 	if(index > q->size){
 		return NULL;
 	}
