@@ -161,6 +161,13 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
   priqueue_offer(sc.q, (void *)j);
   if(sc.s != RR)
     listSort(sc.q);
+  if(sc.s == SJF){
+      listSort(sc.q);
+      listSort(sc.q);
+      listSort(sc.q);
+      listSort(sc.q);
+      listSort(sc.q);
+    }
   for(int i = 0; i<sc.nCores; i++){
     if(sc.c[i] == NULL){
       sc.c[i] = ((job_t *)priqueue_poll(sc.q));
@@ -288,7 +295,7 @@ int scheduler_quantum_expired(int core_id, int time)
   if(s == sc.nCores){
     b = 0;
   }
-  if(b){
+  if(b || priqueue_size(sc.q) >=0){
     // sc.rJobs += 1;
     job_t * temp;
     temp = sc.c[core_id];
@@ -299,6 +306,9 @@ int scheduler_quantum_expired(int core_id, int time)
       if(sc.c[core_id] != NULL) {
         sc.c[core_id] = ((job_t *)priqueue_poll(sc.q));
         priqueue_offer(sc.q,(void *)(temp));
+        if(sc.c[core_id]->sTime == -1){
+          sc.c[core_id]->sTime = time;
+        }
       }
 
 
@@ -311,6 +321,41 @@ int scheduler_quantum_expired(int core_id, int time)
     sc.c[core_id] = NULL;
     return -1;
   }
+
+  //No Job running on the given core
+//   if(sc.c[core_id] == NULL) {
+//     printf("Core: %d has changed from idle to running", core_id);
+//     sc.c[core_id] = ((job_t *)priqueue_poll(sc.q));
+//   }
+//   else {
+//     //Core[core_id]'s Job has finished
+//     if(sc.c[core_id]->remTime == 0) {
+//       //Empty Queue
+//       if(priqueue_size(sc.q) == 0){
+//         sc.c[core_id] = NULL;
+//         return -1;
+//       }
+//       //Non-Empty Queue
+//       else {
+//         sc.c[core_id] = ((job_t *)priqueue_poll(sc.q));
+//         if(sc.c[core_id]->sTime == -1){
+//                 sc.c[core_id]->sTime = time;
+//         }
+//         return sc.c[core_id]->jobNum;
+//       }
+//   }
+//   //Core[core_id]'s Job has not finished
+//   else {
+//     // sc.c[core_id]->remTime -= (time - sc.c[core_id]->sTime);
+//     priqueue_offer(sc.q,(void *)(temp));
+//     sc.c[core_id] = ((job_t *)priqueue_poll(sc.q));
+//     if(sc.c[core_id]->sTime == -1){
+//             sc.c[core_id]->sTime = time;
+//     }
+//     return sc.c[core_id]->jobNum;
+//   }
+// }
+// return -1;
 }
 
 
