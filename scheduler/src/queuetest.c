@@ -21,7 +21,9 @@ int main()
 	priqueue_t q, q2;
 
 	priqueue_init(&q, compare1);
+	setSecondaryCompare(&q, compare1);
 	priqueue_init(&q2, compare2);
+	setSecondaryCompare(&q2, compare2);
 
 	/* Pupulate some data... */
 	int *values = malloc(100 * sizeof(int));

@@ -121,7 +121,7 @@ void scheduler_start_up(int cores, scheme_t scheme)
             sc.comp2 = NULL;
             break;
     default:
-          printf("default\n");
+          //printf("default\n");
           break;
   }
  sc.q = malloc(sizeof(priqueue_t));
@@ -206,32 +206,35 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
     }
   }
 
+job_t * temp;
   if(hpi != -1){
-    sc.c[hpi]->remTime -= (time - sc.c[hpi]->sTime);
+    sc.c[hpi]->remTime += -(time - sc.c[hpi]->sTime);
     // printf("Updated rem time: %d\n",sc.c[hpi]->remTime );
     if(((job_t *)priqueue_peek(sc.q))->remTime < sc.c[hpi]->remTime && sc.s == PSJF){
-          printf("Preempting\n");
-          printf("%d\n",sc.c[hpi]->jobNum );
-          printf("%d\n",sc.c[hpi]->remTime );
+	temp = sc.c[hpi];
+          //printf("Preempting\n");
+          //printf("%d\n",sc.c[hpi]->jobNum );
+          //printf("%d\n",sc.c[hpi]->remTime );
           // sc.wTime -= time;
           // sc.rTime -= time;
           if(sc.c[hpi]->rTime == sc.c[hpi]->remTime)
             sc.c[hpi]->sTime = -1;
-          priqueue_offer(sc.q, (void *)sc.c[hpi]);
           sc.c[hpi] = ((job_t *)priqueue_poll(sc.q));
           sc.c[hpi]->sTime = time;
+	  priqueue_offer(sc.q, (void *)temp);
           return hpi;
     }
     if(((job_t *)priqueue_peek(sc.q))->pri < sc.c[hpi]->pri && sc.s == PPRI){
-          printf("Preempting\n");
-          printf("%d\n",sc.c[hpi]->jobNum );
+	temp = sc.c[hpi];
+          //printf("Preempting\n");
+          //printf("%d\n",sc.c[hpi]->jobNum );
           // sc.wTime -= time;
           // sc.rTime -= time;
           if(sc.c[hpi]->rTime == sc.c[hpi]->remTime)
             sc.c[hpi]->sTime = -1;
-          priqueue_offer(sc.q, (void *)sc.c[hpi]);
           sc.c[hpi] = ((job_t *)priqueue_poll(sc.q));
           sc.c[hpi]->sTime = time;
+	  priqueue_offer(sc.q, (void *)temp);
           return hpi;
     }
 
@@ -259,7 +262,7 @@ int scheduler_job_finished(int core_id, int job_number, int time)
   job_t * j = malloc(sizeof(job_t));
   j = sc.c[core_id];
   j->cTime = time;
-    printf("Job Num: %d sTime: %d cTime: %d\n", j->jobNum, j->sTime, j->cTime);
+    //printf("Job Num: %d sTime: %d cTime: %d\n", j->jobNum, j->sTime, j->cTime);
   if(j->sTime != -1)
     sc.rTime -= (j->aTime - j->sTime);
   sc.tTime += (j->cTime - j->aTime);
@@ -303,7 +306,7 @@ int scheduler_quantum_expired(int core_id, int time)
   // if(s == sc.nCores){
   //   b = 0;
   // }
-  printf("Working on Core: %d\n", core_id);
+  //printf("Working on Core: %d\n", core_id);
   if(priqueue_size(sc.q) >=0){
     // sc.rJobs += 1;
     job_t * temp;
