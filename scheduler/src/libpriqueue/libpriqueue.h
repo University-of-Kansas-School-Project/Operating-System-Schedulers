@@ -20,6 +20,7 @@ typedef struct _priqueue_t
   Node* root;
   Node* tail;
   int(*comp)(const void *, const void *);
+	int(*comp2)(const void *, const void *);
   int size;
 } priqueue_t;
 
@@ -38,5 +39,8 @@ void * priqueue_remove_at(priqueue_t *q, int index);
 int    priqueue_size     (priqueue_t *q);
 
 void   priqueue_destroy  (priqueue_t *q);
+
+void setSecondaryCompare (priqueue_t *q, int(*comparer)(const void *, const void *));
+
 
 #endif /* LIBPQUEUE_H_ */

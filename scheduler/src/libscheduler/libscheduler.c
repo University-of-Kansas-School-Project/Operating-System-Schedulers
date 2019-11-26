@@ -32,6 +32,7 @@ typedef struct _scheduler_t
 {
   priqueue_t * q;
   int (*comp)(const void *, const void *);
+  int (*comp2)(const void *, const void *);
   job_t ** c;
   int nCores;
   scheme_t s;
@@ -97,21 +98,27 @@ void scheduler_start_up(int cores, scheme_t scheme)
   switch (scheme){
     case FCFS:
               sc.comp = &compareFCFS;
+              sc.comp2 = &compareFCFS;
               break;
     case SJF:
             sc.comp = &compareSJF;
+            sc.comp2 = &compareFCFS;
             break;
     case PRI:
             sc.comp = &comparePRI;
+            sc.comp2 = &compareFCFS;
             break;
     case PSJF:
             sc.comp = &comparePSJF;
+            sc.comp2 = &compareFCFS;
             break;
     case PPRI:
             sc.comp = &comparePRI;
+            sc.comp2 = &compareFCFS;
             break;
     case RR:
             sc.comp = &compareRR;
+            sc.comp2 = &compareFCFS;
             break;
     default:
           printf("default\n");
@@ -119,6 +126,7 @@ void scheduler_start_up(int cores, scheme_t scheme)
   }
  sc.q = malloc(sizeof(priqueue_t));
  priqueue_init(sc.q, sc.comp);
+ setSecondaryCompare(sc.q, sc.comp2);
 }
 
 

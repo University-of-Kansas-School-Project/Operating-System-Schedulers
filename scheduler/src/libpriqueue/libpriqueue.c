@@ -27,6 +27,10 @@ void priqueue_init(priqueue_t *q, int(*comparer)(const void *, const void *))
   // comparer(q->rootPtr->aTime, q->rootPtr->next->aTime);
 }
 
+void setSecondaryCompare (priqueue_t *q, int(*comparer)(const void *, const void *)){
+  q->comp2 = comparer;
+}
+
 
 /**
   Insert the specified element into this priority queue.
@@ -229,7 +233,8 @@ void listSort(priqueue_t *q){
 		while(curr->right != lptr){
 			temp = curr;
 			curr = curr->right;
-			if(curr != NULL && q->comp(temp->job, curr->job) >= 0 ){
+      //Case: When Priorties are not the same
+			if(curr != NULL && q->comp(temp->job, curr->job) > 0 ){
 				void * t = temp->job;
 				void * c = curr->job;
 				temp->job = c;
@@ -238,6 +243,23 @@ void listSort(priqueue_t *q){
         break;
 				//std::cout<<t;
 			}
+      //Case: When Priorities are the same
+      else if(curr != NULL && q->comp(temp->job, curr->job) == 0) {
+        //Temp Arrival greater then Curr Arrival
+        printf("Comparing 2 Jobs with equal priorty -> Checking Arrival Time now\n");
+        if(q->comp2(temp->job, curr->job) >= 0) {
+          void * t = temp->job;
+          void * c = curr->job;
+          temp->job = c;
+          curr->job = t;
+          swapped = 1;
+          break;
+        }
+        //Curr Arrival greater then Temp Arrival
+        else {
+          //Do Nothing, Keep the order
+        }
+      }
 		}
 		lptr = curr;
 	}while(swapped);
